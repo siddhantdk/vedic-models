@@ -1,0 +1,6 @@
+micro_wake_word:
+  models:
+    - model: ""
+  on_wake_word_detected:
+    - voice_assistant.start:
+        wake_word: !lambda "return wake_word;"
