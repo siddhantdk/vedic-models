@@ -2,7 +2,7 @@
   "type": "micro",
   "wake_word": "Hey Vedic",
   "author": "Siddhant",
-  "model": "hey_vedik_custom.tflite",
+  "model": "./hey_vedik_custom.tflite",
   "trained_languages": ["en"],
   "version": 1,
   "micro": {
