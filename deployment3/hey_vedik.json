@@ -4,7 +4,7 @@
   "author": "Siddhant",
   "model": "./hey_vedik.tflite",
   "trained_languages": ["en"],
-  "version": 1,
+  "version": 2,
   "micro": {
     "probability_cutoff": 0.7,
     "feature_step_size": 10,
