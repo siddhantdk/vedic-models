@@ -1,0 +1,200 @@
+esphome:
+  name: respeaker-lite
+  friendly_name: ReSpeaker-Lite
+  platformio_options:
+    board_build.flash_mode: dio
+    board_build.mcu: esp32s3
+
+  on_boot:
+    priority: -100
+    then:
+      - delay: 5s
+      - micro_wake_word.start
+      - logger.log: "Wake word engine started"
+      - light.turn_on:
+          id: led
+          green: 100%
+          brightness: 40%
+      - delay: 1s
+      - light.turn_off: led
+  on_shutdown:
+    then:
+      # Prevent loud noise on software restart
+      - lambda: id(respeaker).mute_speaker();
+
+esp32:
+  board: seeed_xiao_esp32s3
+  cpu_frequency: 240MHZ
+  variant: ESP32S3
+  flash_size: 8MB
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+      CONFIG_AUDIO_BOARD_CUSTOM: "y"
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/formatBCE/esphome
+      ref: respeaker_microphone
+    components:
+      - i2s_audio
+    refresh: 0s
+  - source:
+      type: git
+      url: https://github.com/formatBCE/Respeaker-Lite-ESPHome-integration
+      ref: main
+    components:
+      - respeaker_lite
+    refresh: 0s
+
+# Enable logging
+logger:
+
+wifi:
+  ssid: "sytrak_ap_2.4g"
+  password: sytrakSYTRAK
+
+http_request:
+  verify_ssl: false
+  timeout: 10s
+
+button:
+  - platform: restart
+    name: "Restart"
+    id: but_rest
+
+i2c:
+  - id: internal_i2c
+    sda: GPIO5
+    scl: GPIO6
+    frequency: 400kHz
+
+respeaker_lite:
+  id: respeaker
+  reset_pin: GPIO2
+  mute_state:
+    internal: true
+    id: mute_state
+  firmware_version:
+    icon: mdi:application-cog
+    name: XMOS firmware version
+    internal: false
+    id: firmware_version
+  firmware:
+    url: https://github.com/formatBCE/Respeaker-Lite-ESPHome-integration/raw/refs/heads/main/respeaker_lite_i2s_dfu_firmware_48k_v1.1.0.bin
+    version: "1.1.0"
+    md5: 9297155d1bf3eb21a9d4db52a89ea0c6
+
+i2s_audio:
+  - id: i2s_output
+    i2s_lrclk_pin:
+      number: GPIO7
+      allow_other_uses: true
+    i2s_bclk_pin:
+      number: GPIO8
+      allow_other_uses: true
+    i2s_mclk_pin:
+      number: GPIO9
+      allow_other_uses: true
+
+  - id: i2s_input
+    i2s_lrclk_pin:
+      number: GPIO7
+      allow_other_uses: true
+    i2s_bclk_pin:
+      number: GPIO8
+      allow_other_uses: true
+    i2s_mclk_pin:
+      number: GPIO9
+      allow_other_uses: true
+
+audio_dac:
+  - platform: aic3204
+    id: aic3204_dac
+    i2c_id: internal_i2c
+
+microphone:
+  - platform: i2s_audio
+    id: i2s_mics
+    i2s_din_pin: GPIO44
+    adc_type: external
+    pdm: false
+    sample_rate: 48000
+    bits_per_sample: 32bit
+    i2s_mode: secondary
+    i2s_audio_id: i2s_input
+    channel: stereo
+
+micro_wake_word:
+  id: mww
+  vad:
+    probability_cutoff: 0.1
+  microphone:
+    microphone: i2s_mics
+    channels: 1
+    gain_factor: 4
+  stop_after_detection: false
+
+  models:
+    # vedic clock
+    - model: github://siddhantdk/vedic-models/deployment14/vedic_clock.json@62160ae0b6647fb20d0678f0db9b439524c54f27
+      id: vedic_clock
+      probability_cutoff: "0.40"
+      sliding_window_size: "5"
+
+  on_wake_word_detected:
+    - logger.log:
+        format: "Wake word detected: %s"
+        args: ["wake_word.c_str()"]
+    - http_request.post:
+        url: "http://192.168.1.240:5000/api/wake-word"
+        request_headers:
+          Content-Type: application/json
+        json:
+          wake_word: !lambda "return wake_word;"
+    - light.turn_on:
+        id: led
+        red: 80%
+        green: 0%
+        blue: 80%
+        brightness: 60%
+        effect: "Fast Pulse"
+
+    - delay: 2s
+
+    - light.turn_off:
+        id: led
+
+light:
+  - platform: esp32_rmt_led_strip
+    id: led
+    name: "Led Light"
+
+    pin: GPIO1
+    default_transition_length: 0s
+    chipset: ws2812
+    num_leds: 1
+    rgb_order: grb
+    # rmt_channel:
+    # rmt_channel: 0
+    effects:
+      - pulse:
+          name: "Slow Pulse"
+          transition_length: 250ms
+          update_interval: 250ms
+          min_brightness: 50%
+          max_brightness: 100%
+      - pulse:
+          name: "Fast Pulse"
+          transition_length: 100ms
+          update_interval: 100ms
+          min_brightness: 50%
+          max_brightness: 100%
