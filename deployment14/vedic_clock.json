@@ -1,12 +1,10 @@
 {
   "type": "micro",
-  "wake_word": "Vedic Clock",
+  "wake_word": "Vedic Clock v1.0",
   "author": "microwakeword.com",
   "website": "https://microwakeword.com",
   "model": "./vedic_clock.tflite",
-  "trained_languages": [
-    "en"
-  ],
+  "trained_languages": ["en"],
   "version": 2,
   "micro": {
     "probability_cutoff": 0.5,
