@@ -58,14 +58,6 @@ external_components:
 # Enable logging
 logger:
 
-wifi:
-  ssid: "sytrak_ap_2.4g"
-  password: sytrakSYTRAK
-
-http_request:
-  verify_ssl: false
-  timeout: 10s
-
 button:
   - platform: restart
     name: "Restart"
@@ -145,21 +137,20 @@ micro_wake_word:
 
   models:
     # vedic clock
-    - model: github://siddhantdk/vedic-models/deployment14/vedic_clock.json@62160ae0b6647fb20d0678f0db9b439524c54f27
+    - model: github://siddhantdk/vedic-models/deployment14/vedic_clock.json@bd8efe962d745eab14cf102c5701461311753b0c
+      id: vedic_clock_1
+      probability_cutoff: "0.30"
+      sliding_window_size: "5"
+
+    - model: github://siddhantdk/vedic-models/deployment16/vedic_clock.json@bd8efe962d745eab14cf102c5701461311753b0c
       id: vedic_clock
-      probability_cutoff: "0.40"
+      probability_cutoff: "0.2"
       sliding_window_size: "5"
 
   on_wake_word_detected:
     - logger.log:
         format: "Wake word detected: %s"
         args: ["wake_word.c_str()"]
-    - http_request.post:
-        url: "http://192.168.1.240:5000/api/wake-word"
-        request_headers:
-          Content-Type: application/json
-        json:
-          wake_word: !lambda "return wake_word;"
     - light.turn_on:
         id: led
         red: 80%
