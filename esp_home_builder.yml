@@ -10,7 +10,6 @@ esphome:
     then:
       - delay: 5s
       - micro_wake_word.enable_model: vedic_clock_1
-      - micro_wake_word.enable_model: vedic_clock_2
       - micro_wake_word.start
       - logger.log: "Wake word engine started"
       - light.turn_on:
@@ -139,14 +138,9 @@ micro_wake_word:
 
   models:
     # vedic clock
-    - model: github://siddhantdk/vedic-models/deployment16/vedic_clock.json@bd8efe962d745eab14cf102c5701461311753b0c
-      id: vedic_clock_2
-      probability_cutoff: "0.35"
-      sliding_window_size: "5"
-
-    - model: github://siddhantdk/vedic-models/deployment14/vedic_clock.json@bd8efe962d745eab14cf102c5701461311753b0c
+    - model: github://siddhantdk/vedic-models/deployment18/vedic_clock.json@e580fc7aa1522fc78eaa7cb87d42aa7626c39cc5
       id: vedic_clock_1
-      probability_cutoff: "0.35"
+      probability_cutoff: "0.40"
       sliding_window_size: "5"
 
   on_wake_word_detected:
